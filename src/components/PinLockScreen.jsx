@@ -8,7 +8,7 @@ export default function PinLockScreen({ onUnlock }) {
   const [error, setError] = useState("");
   const [isShaking, setIsShaking] = useState(false);
 
-  const CORRECT_PIN = "0507"; // 5th of July (DDMM)
+  const CORRECT_PIN = "4505"; // Secret PIN
 
   const handleKeyPress = (num) => {
     setError("");
@@ -138,7 +138,7 @@ export default function PinLockScreen({ onUnlock }) {
                 animate={{ opacity: 0.6 }}
                 className="font-inter text-[10px] font-normal text-[#5a544f] select-none tracking-tight text-center"
               >
-                Hint: Your birth date (DDMM) 🎂
+                Hint: The secret 4-digit key 🔑
               </motion.p>
             )}
           </AnimatePresence>
