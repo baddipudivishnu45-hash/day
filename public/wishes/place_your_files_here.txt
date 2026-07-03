@@ -1,0 +1,10 @@
+Drop all your edited videos and images inside this folder!
+
+Example files you can place here:
+- day20.jpg
+- day19.mp4
+
+And configure them in: src/components/AdvanceWishes.jsx
+Using paths like:
+- "/wishes/day20.jpg"
+- "/wishes/day19.mp4"

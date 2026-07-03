@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+:root {
+  --font-serif: 'Playfair Display', serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-handwritten: 'Outfit', sans-serif;
+  
+  /* Premium Minimal Letters Color Scheme */
+  --color-cream-dark: #eeebe3;
+  --color-cream-light: #faf8f5;
+  --color-desk: #f7f4ee;
+  --color-ink: #2c2825;
+  --color-ink-light: #5a544f;
+  --color-accent-rose: #c59b97;
+  --color-accent-gold: #bda054;
+  --color-paper: #ffffff;
+}
+
+@theme {
+  --font-playfair: 'Playfair Display', serif;
+  --font-inter: 'Inter', sans-serif;
+  --font-vibes: 'Great Vibes', cursive;
+}
+
+/* Base style resets */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-desk);
+  color: var(--color-ink);
+  overflow-x: hidden;
+}
+
+/* Reset root layout from original scaffolding */
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  text-align: left;
+  border-inline: none;
+  display: block;
+}
+
+/* Lenis Smooth Scrolling */
+html.lenis, html.lenis body {
+  height: auto;
+}
+.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Tactile Stationery Classes */
+.paper-card {
+  background: var(--color-paper);
+  border: 1px solid rgba(44, 40, 37, 0.08);
+  box-shadow: 0 4px 20px rgba(44, 40, 37, 0.04), 0 1px 3px rgba(44, 40, 37, 0.02);
+  position: relative;
+}
+
+.paper-card-premium {
+  background: var(--color-paper);
+  border: 1px solid rgba(44, 40, 37, 0.1);
+  box-shadow: 0 15px 40px rgba(44, 40, 37, 0.06), 0 2px 8px rgba(44, 40, 37, 0.03);
+}
+
+.paper-texture {
+  background-image: radial-gradient(rgba(44, 40, 37, 0.03) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.envelope-shadow {
+  box-shadow: 0 8px 30px rgba(44, 40, 37, 0.08), 0 2px 6px rgba(44, 40, 37, 0.04);
+}
+
+.envelope-shadow-hover:hover {
+  box-shadow: 0 20px 45px rgba(44, 40, 37, 0.12), 0 4px 12px rgba(44, 40, 37, 0.06);
+}
+
+/* Custom Scrollbar in Sepia theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f7f4ee;
+}
+::-webkit-scrollbar-thumb {
+  background: #d8d3c5;
+  border-radius: 8px;
+  border: 2px solid #f7f4ee;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #c5beae;
+}
+
+/* Keyframes & helper animations */
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.animate-float-slow {
+  animation: float 8s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Vintage postmark design styling */
+.postmark {
+  border: 2px dashed rgba(197, 155, 151, 0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Polaroid tilt styles */
+.polaroid-container {
+  perspective: 1000px;
+}
+
+.polaroid-card {
+  background: #ffffff;
+  border: 1px solid rgba(44, 40, 37, 0.08);
+  box-shadow: 0 8px 24px rgba(44, 40, 37, 0.08);
+  transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.6s ease;
+}
+
+.polaroid-card:hover {
+  transform: scale(1.04) rotate(0deg) !important;
+  box-shadow: 0 16px 36px rgba(44, 40, 37, 0.12);
+  z-index: 10;
+}
+
+/* Letter opener fold animation utilities */
+.letter-content-scroll {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Outfit font polish — applied to all font-vibes elements */
+[class*="font-vibes"] {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+}
