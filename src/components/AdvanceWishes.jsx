@@ -150,8 +150,11 @@ const REVEAL_STEPS = [
 export default function AdvanceWishes({ onClose }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [revealStep, setRevealStep] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const scrollContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const videoRefs = useRef({});
 
   // Filter only slides that have content, sorted from lowest ID (Day 01) to highest ID (Day 20)
   const activeSlides = SURPRISE_EDITS.filter(w => !!w.mediaUrl).sort((a, b) => a.id - b.id);
@@ -171,28 +174,157 @@ export default function AdvanceWishes({ onClose }) {
   ];
 
   const totalSlides = allSlides.length;
+  const activeWish = allSlides[currentIndex];
 
-  // Auto-scroll reveal chat list to the bottom as lines print
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [revealStep]);
-
-  // Track scrolling index
-  const handleScroll = (e) => {
-    const container = e.currentTarget;
-    const scrollPos = container.scrollLeft;
-    const width = container.clientWidth;
-    if (width > 0) {
-      const idx = Math.round(scrollPos / width);
-      if (idx !== currentIndex && idx >= 0 && idx < totalSlides) {
-        setCurrentIndex(idx);
-      }
+  const scrollToSlide = (idx) => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        left: idx * scrollContainerRef.current.clientWidth,
+        behavior: 'smooth'
+      });
     }
   };
 
-  // Run confetti and auto-reveal timer timeline when hitting the final slide
+  const handleNext = () => {
+    if (currentIndex < totalSlides - 1) {
+      scrollToSlide(currentIndex + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      scrollToSlide(currentIndex - 1);
+    }
+  };
+
+  // Auto-scroll reveal chat list to the bottom as lines print
+  useEffect(() => {
+    if (currentIndex === totalSlides - 1 && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [revealStep, currentIndex, totalSlides]);
+
+  // Handle slide autoplay progression and background music synchronization
+  useEffect(() => {
+    if (!activeWish) return;
+
+    const bgAudio = document.querySelector('audio');
+
+    // Pause all other videos and reset their times
+    Object.keys(videoRefs.current).forEach(id => {
+      const vid = videoRefs.current[id];
+      if (vid && parseInt(id) !== activeWish.id) {
+        vid.pause();
+        vid.currentTime = 0;
+      }
+    });
+
+    // Handle background audio pausing/resuming during video slides
+    const activeVideo = videoRefs.current[activeWish.id];
+    if (activeWish.mediaType === 'video' && activeVideo) {
+      if (bgAudio) {
+        bgAudio.pause();
+      }
+      if (!isPaused) {
+        activeVideo.play().catch(err => {
+          console.log("Video play failed or autoplay blocked:", err);
+        });
+      }
+    } else {
+      if (bgAudio) {
+        bgAudio.play().catch(err => console.log("Failed to play bg audio:", err));
+      }
+    }
+
+    if (activeWish.id === 21) {
+      setProgress(100);
+      return;
+    }
+
+    if (isPaused) {
+      if (activeWish.mediaType === 'video' && activeVideo) {
+        activeVideo.pause();
+      }
+      return;
+    }
+
+    // Resume video if it was paused and we unpaused
+    if (activeWish.mediaType === 'video' && activeVideo && activeVideo.paused) {
+      activeVideo.play().catch(err => console.log(err));
+    }
+
+    let timer;
+    if (activeWish.mediaType === 'photo') {
+      const duration = 5000; // 5 seconds
+      const intervalTime = 50;
+      const step = (intervalTime / duration) * 100;
+
+      timer = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(timer);
+            handleNext();
+            return 100;
+          }
+          return prev + step;
+        });
+      }, intervalTime);
+    } else if (activeWish.mediaType === 'video' && activeVideo) {
+      const handleTimeUpdate = () => {
+        if (activeVideo.duration) {
+          setProgress((activeVideo.currentTime / activeVideo.duration) * 100);
+        }
+      };
+
+      const handleVideoEnded = () => {
+        setProgress(100);
+        handleNext();
+      };
+
+      activeVideo.addEventListener('timeupdate', handleTimeUpdate);
+      activeVideo.addEventListener('ended', handleVideoEnded);
+
+      // Trigger initial progress call
+      handleTimeUpdate();
+
+      return () => {
+        activeVideo.removeEventListener('timeupdate', handleTimeUpdate);
+        activeVideo.removeEventListener('ended', handleVideoEnded);
+      };
+    } else {
+      // Fallback for embed or unsupported media (8s duration)
+      const duration = 8000;
+      const intervalTime = 50;
+      const step = (intervalTime / duration) * 100;
+
+      timer = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(timer);
+            handleNext();
+            return 100;
+          }
+          return prev + step;
+        });
+      }, intervalTime);
+    }
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [currentIndex, isPaused]);
+
+  // Clean up: ensure background audio resumes when closing the slide component
+  useEffect(() => {
+    return () => {
+      const bgAudio = document.querySelector('audio');
+      if (bgAudio) {
+        bgAudio.play().catch(err => console.log("Failed to resume bg audio on close:", err));
+      }
+    };
+  }, []);
+
+  // Run confetti and auto-reveal timer timeline when hitting the final slide (Day 21)
   useEffect(() => {
     if (activeWish && activeWish.id === 21) {
       setRevealStep(0);
@@ -249,24 +381,16 @@ export default function AdvanceWishes({ onClose }) {
     }
   }, [currentIndex]);
 
-  const scrollToSlide = (idx) => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        left: idx * scrollContainerRef.current.clientWidth,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const handleNext = () => {
-    if (currentIndex < totalSlides - 1) {
-      scrollToSlide(currentIndex + 1);
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      scrollToSlide(currentIndex - 1);
+  // Track scrolling index
+  const handleScroll = (e) => {
+    const container = e.currentTarget;
+    const scrollPos = container.scrollLeft;
+    const width = container.clientWidth;
+    if (width > 0) {
+      const idx = Math.round(scrollPos / width);
+      if (idx !== currentIndex && idx >= 0 && idx < totalSlides) {
+        setCurrentIndex(idx);
+      }
     }
   };
 
@@ -294,7 +418,7 @@ export default function AdvanceWishes({ onClose }) {
     return url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com') || url.includes('embed');
   };
 
-  const activeWish = allSlides[currentIndex];
+  // activeWish defined at top
 
   return (
     <div className="fixed inset-0 z-50 bg-[#161413] flex flex-col justify-between overflow-hidden text-white">
@@ -317,19 +441,23 @@ export default function AdvanceWishes({ onClose }) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.1)_0%,rgba(0,0,0,0.7)_100%)] pointer-events-none z-0" />
 
       {/* Stories progress bars at the top */}
-      <div className="absolute top-6 left-6 right-6 flex gap-1.5 z-40 pointer-events-none">
+      <div className="absolute top-4 left-4 right-4 sm:top-6 sm:left-6 sm:right-6 flex gap-1.5 z-40 pointer-events-none">
         {allSlides.map((_, idx) => (
           <div key={idx} className="h-[2px] flex-1 bg-white/20 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-[#c59b97] to-[#bda054] transition-all duration-300 ease-out"
-              style={{ width: idx < currentIndex ? '100%' : idx === currentIndex ? '100%' : '0%' }}
+              className={`h-full bg-gradient-to-r from-[#c59b97] to-[#bda054] ${
+                idx === currentIndex ? '' : 'transition-all duration-300 ease-out'
+              }`}
+              style={{
+                width: idx < currentIndex ? '100%' : idx === currentIndex ? `${progress}%` : '0%'
+              }}
             />
           </div>
         ))}
       </div>
 
       {/* Floating Header controls */}
-      <div className="absolute top-10 left-6 right-6 flex justify-between items-center z-40 select-none">
+      <div className="absolute top-8 left-4 right-4 sm:top-12 sm:left-6 sm:right-6 flex justify-between items-center z-40 select-none">
         <div>
           <span className="font-inter text-[8px] tracking-[0.3em] text-[#c59b97] font-semibold uppercase block">
             {activeWish?.dayText}
@@ -363,7 +491,7 @@ export default function AdvanceWishes({ onClose }) {
           return (
             <div
               key={slide.id}
-              className="w-full h-full shrink-0 snap-start flex items-center justify-center p-4 md:p-8 relative"
+              className="w-full h-full shrink-0 snap-start flex items-center justify-center p-0 sm:p-4 md:p-8 relative"
             >
               {/* Tap navigation triggers (like Instagram stories) */}
               <div
@@ -376,7 +504,14 @@ export default function AdvanceWishes({ onClose }) {
               />
 
               {/* Scrapbook slide window wrapper */}
-              <div className={`w-full max-w-md md:max-w-lg aspect-[9/16] bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl flex flex-col justify-between relative overflow-hidden select-none z-10 animate-fade-in p-5 md:p-6`}>
+              <div
+                onMouseDown={() => setIsPaused(true)}
+                onMouseUp={() => setIsPaused(false)}
+                onMouseLeave={() => setIsPaused(false)}
+                onTouchStart={() => setIsPaused(true)}
+                onTouchEnd={() => setIsPaused(false)}
+                className={`w-full h-full sm:h-auto sm:max-w-md md:max-w-lg sm:aspect-[9/16] bg-black/60 sm:bg-black/40 backdrop-blur-md sm:border border-white/10 sm:rounded-2xl shadow-2xl flex flex-col justify-between relative overflow-hidden select-none z-10 animate-fade-in p-4 pt-16 pb-6 sm:p-5 md:p-6`}
+              >
                 {/* Paper Tape decorative corner top-left */}
                 {isGrandFinale && (
                   <div className="absolute -top-3 -left-10 w-24 h-8 bg-white/5 border-b border-white/5 rotate-[-35deg] pointer-events-none" />
@@ -433,7 +568,7 @@ export default function AdvanceWishes({ onClose }) {
                   </div>
                 ) : (
                   /* Regular Story Slide Layout (Fullscreen Image/Video Edit) */
-                  <div className="w-full h-full relative flex items-center justify-center bg-[#1a1615]">
+                  <div className="w-full h-full relative flex items-center justify-center bg-[#1a1615]/20">
                     {slide.mediaType === 'photo' ? (
                       <img
                         src={slide.mediaUrl}
@@ -452,9 +587,11 @@ export default function AdvanceWishes({ onClose }) {
                         />
                       ) : (
                         <video
+                          ref={el => { videoRefs.current[slide.id] = el; }}
                           src={slide.mediaUrl}
-                          controls
                           className="w-full h-full object-contain bg-black"
+                          playsInline
+                          webkit-playsinline="true"
                         />
                       )
                     )}

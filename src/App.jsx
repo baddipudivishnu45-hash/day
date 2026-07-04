@@ -169,7 +169,10 @@ function AppContent() {
             </header>
 
             {/* Desktop Tabletop workspace: interactive fanned letters deck */}
-            <main className="max-w-5xl w-full mx-auto px-6 pb-32 flex-grow flex items-center justify-center min-h-[480px] relative select-none z-10">
+            <main
+              onClick={() => setHoveredIdx(null)}
+              className="max-w-5xl w-full mx-auto px-6 pb-32 flex-grow flex items-center justify-center min-h-[480px] relative select-none z-10"
+            >
               <div 
                 onMouseEnter={() => {
                   if (typeof window !== 'undefined' && window.innerWidth >= 640) {
@@ -209,7 +212,14 @@ function AppContent() {
                         title={letter.title}
                         indexText={letter.indexText}
                         dateText={letter.dateText}
-                        onClick={() => setActiveLetter(letter.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (hoveredIdx === idx) {
+                            setActiveLetter(letter.id);
+                          } else {
+                            setHoveredIdx(idx);
+                          }
+                        }}
                       />
                     </motion.div>
                   );
