@@ -111,7 +111,7 @@ Urs Vishnu(Amore)`;
               Hand-signed message
             </span>
             <span className="font-vibes text-xl text-[#c59b97] select-none mr-2">
-              With Love
+              With All My Efforts!
             </span>
           </motion.div>
         )}
