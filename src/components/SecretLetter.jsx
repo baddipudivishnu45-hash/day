@@ -40,7 +40,7 @@ Because some moments are meant to happen… and this is definitely one of them �
 
 I hope this birthday brings that this evani nen chepan rakshi!
 Nuv happy ga unte chalu 🤍
-With all my love,
+With all my efforts,
 Always.
 Urs Vishnu(Amore)`;
 
